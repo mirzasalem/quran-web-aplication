@@ -17,6 +17,9 @@ export default function SurahPage() {
   const params = useParams();
   const surahNumber = parseInt(params.number as string, 10);
 
+  //  useAudioPlayer call
+  const { playAyah, playSurah, stop, isAyahPlaying, isAyahLoading, state: audioState } = useAudioPlayer();
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
   const [fontSettingsOpen, setFontSettingsOpen] = useState(false);
@@ -25,7 +28,6 @@ export default function SurahPage() {
   const [error, setError] = useState("");
 
   const { settings, updateSettings } = useFontSettings();
-  const { playAyah, isAyahPlaying, isAyahLoading } = useAudioPlayer();
 
   const surahMeta = SURAHS.find((s) => s.number === surahNumber);
   const prevSurah = surahNumber > 1 ? surahNumber - 1 : null;
@@ -53,11 +55,24 @@ export default function SurahPage() {
     fetchSurah();
   }, [fetchSurah]);
 
+  // auto scroll to currently playing ayah
+  useEffect(() => {
+    if (audioState.currentAyah && audioState.isSurahMode) {
+      const el = document.getElementById(`ayah-${audioState.currentAyah}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [audioState.currentAyah, audioState.isSurahMode]);
+
   const fontClassMap: Record<string, string> = {
     amiri: "arabic-font-amiri",
     scheherazade: "arabic-font-scheherazade",
     uthmanic: "arabic-font-uthmanic",
   };
+
+  const isSurahCurrentlyPlaying =
+    audioState.currentSurah === surahNumber &&
+    audioState.isSurahMode &&
+    audioState.isPlaying;
 
   return (
     <div className="min-h-screen bg-bg-primary flex">
@@ -66,48 +81,99 @@ export default function SurahPage() {
         onFontSettingsOpen={() => setFontSettingsOpen(true)}
         onSurahSidebarToggle={() => setSidebarOpen((v) => !v)}
       />
-      <SurahSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} activeSurah={surahNumber} />
+      <SurahSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        activeSurah={surahNumber}
+      />
       <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
-      <FontSettingsPanel isOpen={fontSettingsOpen} onClose={() => setFontSettingsOpen(false)} settings={settings} onUpdate={updateSettings} />
+      <FontSettingsPanel
+        isOpen={fontSettingsOpen}
+        onClose={() => setFontSettingsOpen(false)}
+        settings={settings}
+        onUpdate={updateSettings}
+      />
 
       <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? "lg:ml-[calc(56px+288px)]" : "lg:ml-14"} ml-14 min-h-screen`}>
+
         {/* Header */}
         <header className="sticky top-0 z-20 bg-bg-primary/90 backdrop-blur-md border-b border-border px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <button className="lg:hidden text-text-muted hover:text-text-primary flex-shrink-0" onClick={() => setSidebarOpen(true)}>
+              <button
+                className="lg:hidden text-text-muted hover:text-text-primary flex-shrink-0"
+                onClick={() => setSidebarOpen(true)}
+              >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <line x1="3" y1="12" x2="21" y2="12"/>
+                  <line x1="3" y1="18" x2="21" y2="18"/>
                 </svg>
               </button>
               <Link href="/" className="text-text-muted hover:text-text-primary transition-colors flex-shrink-0">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
                 </svg>
               </Link>
               {surahMeta && (
                 <h1 className="text-sm font-semibold text-text-primary truncate">
                   {surahMeta.englishName}
-                  <span className="text-text-muted font-normal ml-2 hidden sm:inline">({surahMeta.englishNameTranslation})</span>
+                  <span className="text-text-muted font-normal ml-2 hidden sm:inline">
+                    ({surahMeta.englishNameTranslation})
+                  </span>
                 </h1>
               )}
             </div>
+
             <div className="flex items-center gap-2 flex-shrink-0">
-              <button onClick={() => setFontSettingsOpen(true)} className="w-8 h-8 rounded-lg bg-bg-card border border-border text-text-muted hover:text-accent-gold hover:border-accent-gold/40 transition-all flex items-center justify-center" title="Font Settings">
+              <button
+                onClick={() => setFontSettingsOpen(true)}
+                className="w-8 h-8 rounded-lg bg-bg-card border border-border text-text-muted hover:text-accent-gold hover:border-accent-gold/40 transition-all flex items-center justify-center"
+                title="Font Settings"
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>
+                  <polyline points="4 7 4 4 20 4 20 7"/>
+                  <line x1="9" y1="20" x2="15" y2="20"/>
+                  <line x1="12" y1="4" x2="12" y2="20"/>
                 </svg>
               </button>
-              <button onClick={() => setSearchOpen(true)} className="w-8 h-8 rounded-lg bg-bg-card border border-border text-text-muted hover:text-accent-gold hover:border-accent-gold/40 transition-all flex items-center justify-center" title="Search">
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="w-8 h-8 rounded-lg bg-bg-card border border-border text-text-muted hover:text-accent-gold hover:border-accent-gold/40 transition-all flex items-center justify-center"
+                title="Search"
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
               </button>
             </div>
           </div>
         </header>
 
+        {/* Now Playing Bar — shows when surah is playing */}
+        {isSurahCurrentlyPlaying && audioState.currentAyah && (
+          <div className="sticky top-[57px] z-10 bg-accent-gold/10 border-b border-accent-gold/30 px-4 sm:px-6 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="playing-indicator flex items-end gap-0.5 h-4">
+                <span /><span /><span /><span />
+              </div>
+              <span className="text-xs text-accent-gold font-medium">
+                Now Playing — Ayah {audioState.currentAyah} of {surahMeta?.numberOfAyahs}
+              </span>
+            </div>
+            <button
+              onClick={stop}
+              className="text-xs text-accent-gold/70 hover:text-accent-gold transition-colors"
+            >
+              ✕ Stop
+            </button>
+          </div>
+        )}
+
         <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16">
+
           {/* Surah Header Card */}
           {surahMeta && (
             <div className="relative my-8 text-center py-10 px-6 rounded-2xl overflow-hidden bg-gradient-to-br from-bg-card via-bg-secondary to-bg-card border border-border">
@@ -118,36 +184,92 @@ export default function SurahPage() {
               <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 border-accent-gold/40 rounded-tr-lg" />
               <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2 border-accent-gold/40 rounded-bl-lg" />
               <div className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2 border-accent-gold/40 rounded-br-lg" />
+
               <div className="relative">
                 <div className="flex items-center justify-center gap-3 mb-3">
                   <div className="h-px flex-1 bg-gradient-to-r from-transparent to-accent-gold/40" />
-                  <span className="text-xs text-accent-gold font-semibold uppercase tracking-widest">Surah {surahMeta.number}</span>
+                  <span className="text-xs text-accent-gold font-semibold uppercase tracking-widest">
+                    Surah {surahMeta.number}
+                  </span>
                   <div className="h-px flex-1 bg-gradient-to-l from-transparent to-accent-gold/40" />
                 </div>
-                <h1 className={`text-4xl sm:text-5xl text-text-arabic mb-3 leading-loose ${fontClassMap[settings.arabicFont]}`} dir="rtl">
+
+                <h1
+                  className={`text-4xl sm:text-5xl text-text-arabic mb-3 leading-loose ${fontClassMap[settings.arabicFont]}`}
+                  dir="rtl"
+                >
                   {surahMeta.name}
                 </h1>
                 <p className="text-xl font-semibold text-text-primary mb-1">{surahMeta.englishName}</p>
                 <p className="text-sm text-text-muted mb-4">{surahMeta.englishNameTranslation}</p>
-                <div className="flex items-center justify-center gap-4 text-xs">
-                  <span className={`px-3 py-1 rounded-full ${surahMeta.revelationType === "Meccan" ? "bg-orange-900/30 text-orange-400 border border-orange-900/40" : "bg-teal-900/30 text-teal-400 border border-teal-900/40"}`}>
+
+                {/* Badges */}
+                <div className="flex items-center justify-center gap-4 text-xs mb-5">
+                  <span className={`px-3 py-1 rounded-full ${
+                    surahMeta.revelationType === "Meccan"
+                      ? "bg-orange-900/30 text-orange-400 border border-orange-900/40"
+                      : "bg-teal-900/30 text-teal-400 border border-teal-900/40"
+                  }`}>
                     {surahMeta.revelationType}
                   </span>
                   <span className="text-text-muted">{surahMeta.numberOfAyahs} Ayahs</span>
                 </div>
+
+                {/* ✅ Play Full Surah button — outside the badges div */}
+                {surah && (
+                  <button
+                    onClick={() => {
+                      if (isSurahCurrentlyPlaying) {
+                        stop();
+                      } else {
+                        const ayahNumbers = surah.ayahs.map((a) => a.numberInSurah);
+                        playSurah(surahNumber, ayahNumbers);
+                      }
+                    }}
+                    className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all border
+                      ${isSurahCurrentlyPlaying
+                        ? "bg-accent-gold text-bg-primary border-accent-gold"
+                        : "bg-accent-gold/20 text-accent-gold hover:bg-accent-gold hover:text-bg-primary border-accent-gold/30"
+                      }`}
+                  >
+                    {isSurahCurrentlyPlaying ? (
+                      <>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                          <rect x="6" y="4" width="4" height="16"/>
+                          <rect x="14" y="4" width="4" height="16"/>
+                        </svg>
+                        Stop Playback
+                      </>
+                    ) : (
+                      <>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                          <polygon points="5,3 19,12 5,21"/>
+                        </svg>
+                        Play Full Surah
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* Bismillah */}
                 {surahMeta.number !== 1 && surahMeta.number !== 9 && (
                   <div className="mt-6 pt-4 border-t border-border">
-                    <p className={`text-text-arabic leading-loose ${fontClassMap[settings.arabicFont]}`} style={{ fontSize: `${settings.arabicFontSize * 0.85}px`, direction: "rtl" }}>
+                    <p
+                      className={`text-text-arabic leading-loose ${fontClassMap[settings.arabicFont]}`}
+                      style={{ fontSize: `${settings.arabicFontSize * 0.85}px`, direction: "rtl" }}
+                    >
                       بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
                     </p>
-                    <p className="text-xs text-text-muted mt-1">In the name of Allah, the Entirely Merciful, the Especially Merciful</p>
+                    <p className="text-xs text-text-muted mt-1">
+                      In the name of Allah, the Entirely Merciful, the Especially Merciful
+                    </p>
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* Loading */}
+          {/* Loading Skeleton */}
           {isLoading && (
             <div className="space-y-4">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -172,10 +294,13 @@ export default function SurahPage() {
           {/* Error */}
           {error && !isLoading && (
             <div className="text-center py-16">
-              <div className="text-4xl mb-4">⚠️</div>
+              <div className="text-4xl mb-4">Error</div>
               <h3 className="text-text-primary font-semibold mb-2">Failed to Load</h3>
               <p className="text-text-muted text-sm mb-6">{error}</p>
-              <button onClick={fetchSurah} className="px-4 py-2 bg-accent-gold text-bg-primary rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+              <button
+                onClick={fetchSurah}
+                className="px-4 py-2 bg-accent-gold text-bg-primary rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+              >
                 Try Again
               </button>
             </div>
@@ -201,23 +326,35 @@ export default function SurahPage() {
             </div>
           )}
 
-          {/* Prev/Next Navigation */}
+          {/* Prev / Next Navigation */}
           {!isLoading && !error && (
             <div className="flex items-center justify-between mt-10 pt-8 border-t border-border">
               {prevSurah ? (
-                <Link href={`/surah/${prevSurah}`} className="flex items-center gap-2 px-4 py-2 bg-bg-card border border-border rounded-lg text-sm text-text-secondary hover:text-text-primary hover:border-border-light transition-all">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+                <Link
+                  href={`/surah/${prevSurah}`}
+                  className="flex items-center gap-2 px-4 py-2 bg-bg-card border border-border rounded-lg text-sm text-text-secondary hover:text-text-primary hover:border-border-light transition-all"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M15 18l-6-6 6-6"/>
+                  </svg>
                   {SURAHS.find((s) => s.number === prevSurah)?.englishName}
                 </Link>
               ) : <div />}
+
               {nextSurah ? (
-                <Link href={`/surah/${nextSurah}`} className="flex items-center gap-2 px-4 py-2 bg-bg-card border border-border rounded-lg text-sm text-text-secondary hover:text-text-primary hover:border-border-light transition-all">
+                <Link
+                  href={`/surah/${nextSurah}`}
+                  className="flex items-center gap-2 px-4 py-2 bg-bg-card border border-border rounded-lg text-sm text-text-secondary hover:text-text-primary hover:border-border-light transition-all"
+                >
                   {SURAHS.find((s) => s.number === nextSurah)?.englishName}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
                 </Link>
               ) : <div />}
             </div>
           )}
+
         </div>
       </main>
     </div>

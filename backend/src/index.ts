@@ -137,10 +137,14 @@ app.get("/api/search", async (c) => {
     // Search through a subset of surahs or all
     const surahsToSearch = surahFilter
       ? [parseInt(surahFilter)]
-      : Array.from({ length: 114 }, (_, i) => i + 1).slice(0, 20); // Limit for performance
+      : Array.from({ length: 114 }, (_, i) => i + 1); 
+    const BATCH_SIZE = 10;
+    for (let i = 0; i < surahsToSearch.length; i += BATCH_SIZE) {
+      const batch = surahsToSearch.slice(i, i + BATCH_SIZE);
+      const surahDatas = await Promise.all(batch.map(num => fetchSurahFromAPI(num)))    ;
 
-    for (const num of surahsToSearch) {
-      const surahData = await fetchSurahFromAPI(num);
+    // for (const num of surahsToSearch) {
+    //   const surahData = await fetchSurahFromAPI(num);
       if (!surahData) continue;
 
       for (const ayah of surahData.ayahs) {
