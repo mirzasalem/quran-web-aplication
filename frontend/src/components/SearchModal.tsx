@@ -38,14 +38,24 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     }
   }, [isOpen]);
 
+
   const handleSearch = useCallback(
-    (q: string) => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      if (q.length < 2) {
-        setResults([]);
-        setError("");
-        return;
-      }
+  (q: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (q.length < 2) {
+      setResults([]);
+      setError("");
+      return;
+    }
+
+  // const handleSearch = useCallback(
+  //   (q: string) => {
+  //     if (debounceRef.current) clearTimeout(debounceRef.current);
+  //     if (q.length < 2) {
+  //       setResults([]);
+  //       setError("");
+  //       return;
+  //     }
       debounceRef.current = setTimeout(async () => {
         setIsLoading(true);
         setError("");
@@ -53,7 +63,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
           const data = await searchAyahs(q, lang);
           setResults(data);
         } catch {
-          setError("Search failed. Make sure the backend is running.");
+          setError("Search failed. Please try again.");
           setResults([]);
         } finally {
           setIsLoading(false);

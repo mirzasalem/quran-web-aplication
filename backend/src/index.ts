@@ -121,6 +121,7 @@ app.get("/api/search", async (c) => {
     return c.json({ success: false, error: "Query must be at least 2 characters" }, 400);
   }
 
+  // return cached result if available
   const cacheKey = `${query}|${lang}|${surahFilter}`;
   if (searchCache.has(cacheKey)) {
     return c.json({ success: true, data: searchCache.get(cacheKey), cached: true });
@@ -134,40 +135,46 @@ app.get("/api/search", async (c) => {
       ayah: Ayah;
     }> = [];
 
-    // Search through a subset of surahs or all
     const surahsToSearch = surahFilter
       ? [parseInt(surahFilter)]
-      : Array.from({ length: 114 }, (_, i) => i + 1); 
-    const BATCH_SIZE = 10;
-    for (let i = 0; i < surahsToSearch.length; i += BATCH_SIZE) {
-      const batch = surahsToSearch.slice(i, i + BATCH_SIZE);
-      const surahDatas = await Promise.all(batch.map(num => fetchSurahFromAPI(num)))    ;
+      : Array.from({ length: 114 }, (_, i) => i + 1);
 
-    // for (const num of surahsToSearch) {
-    //   const surahData = await fetchSurahFromAPI(num);
-      if (!surahData) continue;
+    // fetch one by one with individual try/catch
+    for (const num of surahsToSearch) {
+      try {
+        const surahData = await fetchSurahFromAPI(num);
+        if (!surahData) continue;
 
-      for (const ayah of surahData.ayahs) {
-        const searchText = lang === "ar" ? ayah.text : ayah.translation;
-        if (searchText.toLowerCase().includes(query)) {
-          results.push({
-            surahNumber: surahData.number,
-            surahName: surahData.name,
-            surahEnglishName: surahData.englishName,
-            ayah,
-          });
+        for (const ayah of surahData.ayahs) {
+          const searchText = lang === "ar" ? ayah.text : ayah.translation;
+          if (searchText.toLowerCase().includes(query)) {
+            results.push({
+              surahNumber: surahData.number,
+              surahName: surahData.name,
+              surahEnglishName: surahData.englishName,
+              ayah,
+            });
+          }
           if (results.length >= 50) break;
         }
+      } catch (err) {
+        console.error(`Skipping surah ${num}:`, err);
+        continue;
       }
+
       if (results.length >= 50) break;
     }
 
     searchCache.set(cacheKey, results as any);
     return c.json({ success: true, data: results, total: results.length });
+
   } catch (err) {
+    console.error("Search error:", err);
     return c.json({ success: false, error: "Search failed" }, 500);
   }
 });
+
+
 
 // GET /api/audio/:surahNumber/:ayahNumber - Get audio URL
 app.get("/api/audio/:surahNumber/:ayahNumber", (c) => {
