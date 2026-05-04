@@ -7,9 +7,11 @@ import SearchModal from "@/components/SearchModal";
 import FontSettingsPanel from "@/components/FontSettingsPanel";
 import { useFontSettings } from "@/hooks/useFontSettings";
 import { SURAHS } from "@/lib/surahs";
+import AboutModal from "@/components/AboutModal";
 
 export default function HomePage() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [fontSettingsOpen, setFontSettingsOpen] = useState(false);
   const { settings, updateSettings } = useFontSettings();
@@ -36,7 +38,7 @@ export default function HomePage() {
         <header className="sticky top-0 z-20 bg-bg-primary/90 backdrop-blur-md border-b border-border px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button className="lg:hidden text-text-muted hover:text-text-primary" onClick={() => setSidebarOpen(true)}>
+              <button className="lg:hidden text-text-muted hover:text-text-primary" onClick={() => setSidebarOpen((v) => !v)}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
                 </svg>

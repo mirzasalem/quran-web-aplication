@@ -6,6 +6,7 @@ interface IconSidebarProps {
   onSearchOpen: () => void;
   onFontSettingsOpen: () => void;
   onSurahSidebarToggle: () => void;
+  onAboutOpen: () => void;
 }
 
 const MosqueIcon = () => (
@@ -58,6 +59,7 @@ export default function IconSidebar({
   onSearchOpen,
   onFontSettingsOpen,
   onSurahSidebarToggle,
+  onAboutOpen
 }: IconSidebarProps) {
   const pathname = usePathname();
 
@@ -67,7 +69,7 @@ export default function IconSidebar({
     { icon: <SearchIcon />, label: "Search", action: onSearchOpen, id: "search" },
     { icon: <BookmarkIcon />, label: "Bookmarks", href: "#", id: "bookmark" },
     { icon: <SettingsIcon />, label: "Font Settings", action: onFontSettingsOpen, id: "settings" },
-    { icon: <InfoIcon />, label: "About", href: "#", id: "info" },
+    { icon: <InfoIcon />, label: "About", action: onAboutOpen, id: "info" },
   ];
 
   return (
