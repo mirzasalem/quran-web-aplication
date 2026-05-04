@@ -7,7 +7,7 @@ import SearchModal from "@/components/SearchModal";
 import FontSettingsPanel from "@/components/FontSettingsPanel";
 import { useFontSettings } from "@/hooks/useFontSettings";
 import { SURAHS } from "@/lib/surahs";
-import AboutModal from "@/components/AboutModal";
+// import AboutModal from "@/components/AboutModal";
 
 export default function HomePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
