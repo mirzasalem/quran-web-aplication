@@ -6,6 +6,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  outputFileTracingExcludes: {
+    '*': ['**/@swc/core*', '**/@esbuild*', '**/webpack*'],
+  },
 }
 
 module.exports = nextConfig
