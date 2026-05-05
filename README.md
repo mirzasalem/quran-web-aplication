@@ -2,7 +2,6 @@
 A full-stack Quran web application built with **Next.js** (frontend) and **Hono + Bun** (backend). Read all 114 Surahs with Arabic text, English translations, per-ayah audio recitation, full surah playback, font customization, and fuzzy search — all in a beautiful dark UI.
 
 > 🔗 **Live Demo:** [https://quran-web-aplication-1.onrender.com/](https://quran-web-aplication-1.onrender.com/)  
-> 📹 **Screen Recording:** [https://drive.google.com/file/d/1T_1JBYanz4ExBMWaD9pkKlq2z4ZAF4rh/view?usp=sharing](https://drive.google.com/file/d/1T_1JBYanz4ExBMWaD9pkKlq2z4ZAF4rh/view?usp=sharing)  
 > 🐙 **GitHub:** [https://github.com/mirzasalem/quran-web-aplication.git](https://github.com/mirzasalem/quran-web-aplication.git)
 
 ---
